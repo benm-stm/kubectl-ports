@@ -19,7 +19,7 @@ import (
 
 // svcPortsCmd represents the svcPorts command
 var svcPortsCmd = &cobra.Command{
-	Use:   "svcPorts",
+	Use:   "svc",
 	Short: "Show service ports in tabular mode",
 	Long: `Show service ports in tabular mode.
 
@@ -60,6 +60,12 @@ var svcPortsCmd = &cobra.Command{
 	},
 }
 
+func init() {
+	rootCmd.AddCommand(svcPortsCmd)
+	svcPortsCmd.Aliases = append(svcPortsCmd.Aliases, "service", "services")
+	svcPortsCmd.PersistentFlags().StringP("namespace", "n", "default", "service's namespace")
+}
+
 func DrawSvcTable(clientset *kubernetes.Clientset, ports []v1.ServicePort, ns string, header []string, data [][]string, arg string) {
 	for _, v := range ports {
 		appProtocol := ""
@@ -80,11 +86,6 @@ func DrawSvcTable(clientset *kubernetes.Clientset, ports []v1.ServicePort, ns st
 
 	}
 	renderTable(header, data, arg)
-}
-
-func init() {
-	rootCmd.AddCommand(svcPortsCmd)
-	svcPortsCmd.PersistentFlags().String("namespace", "default", "service's namespace")
 }
 
 // ClientSet k8s clientset
