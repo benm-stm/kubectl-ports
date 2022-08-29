@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strconv"
 
@@ -28,14 +27,18 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		ns, err := cmd.Flags().GetString("namespace")
+		if err != nil {
+			panic(err.Error())
+		}
 		var data = [][]string{}
+		var header = []string{}
 		clientset := ClientSet(genericclioptions.NewConfigFlags(true))
-		svc, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{})
+		svc, err := clientset.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			panic(err.Error())
 		}
 		for _, arg := range args {
-			fmt.Printf("\n--> %v ports :\n", arg)
 			for _, v1 := range svc.Items {
 				for _, v2 := range v1.Spec.Ports {
 					appProtocol := ""
@@ -44,6 +47,7 @@ to quickly create a Cobra application.`,
 					}
 					data = append(data,
 						[]string{
+							"",
 							v2.Name,
 							string(v2.Protocol),
 							strconv.Itoa(int(v2.Port)),
@@ -54,33 +58,23 @@ to quickly create a Cobra application.`,
 					)
 				}
 			}
+			header = []string{
+				"Service Name",
+				"Name",
+				"Protocol",
+				"Port",
+				"TargetPort",
+				"NodePort",
+				"AppProtocol",
+			}
+			renderTable(header, data, arg)
 		}
-		var header = []string{
-			"Name",
-			"Protocol",
-			"Port",
-			"TargetPort",
-			"NodePort",
-			"AppProtocol",
-		}
-		renderTable(header, data)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(svcPortsCmd)
-	svcPortsCmd.PersistentFlags().String("namespace", "", "")
-	//svcPortsCmd.PersistentFlags().String("service", "", "")
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// svcPortsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// svcPortsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	svcPortsCmd.PersistentFlags().String("namespace", "", "service's namespace")
 }
 
 // ClientSet k8s clientset
@@ -97,12 +91,15 @@ func ClientSet(configFlags *genericclioptions.ConfigFlags) *kubernetes.Clientset
 	return clientSet
 }
 
-func renderTable(header []string, data [][]string) {
+func renderTable(header []string, data [][]string, arg string) {
 	table := tablewriter.NewWriter(os.Stdout)
+	table.Rich([]string{arg}, []tablewriter.Colors{tablewriter.Color(21)})
 	table.SetHeader(header)
 
 	for _, v := range data {
 		table.Append(v)
 	}
+	table.NumLines()
+	table.SetHeader(header)
 	table.Render() // Send output
 }
