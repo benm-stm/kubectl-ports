@@ -31,16 +31,6 @@ var svcPortsCmd = &cobra.Command{
 		if err != nil {
 			panic(err.Error())
 		}
-		var data = [][]string{}
-		var header = []string{
-			"Service Name",
-			"Name",
-			"Protocol",
-			"Port",
-			"TargetPort",
-			"NodePort",
-			"AppProtocol",
-		}
 		clientset := ClientSet(genericclioptions.NewConfigFlags(true))
 
 		for _, arg := range args {
@@ -48,14 +38,14 @@ var svcPortsCmd = &cobra.Command{
 			if err != nil {
 				panic(err.Error())
 			}
-			DrawSvcTable(clientset, svc.Spec.Ports, ns, header, data, arg)
+			DrawSvcTable(clientset, svc.Spec.Ports, ns, arg)
 		}
 		svc, err := clientset.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			panic(err.Error())
 		}
 		for _, svc := range svc.Items {
-			DrawSvcTable(clientset, svc.Spec.Ports, ns, header, data, svc.Name)
+			DrawSvcTable(clientset, svc.Spec.Ports, ns, svc.Name)
 		}
 	},
 }
@@ -66,7 +56,17 @@ func init() {
 	svcPortsCmd.PersistentFlags().StringP("namespace", "n", "default", "service's namespace")
 }
 
-func DrawSvcTable(clientset *kubernetes.Clientset, ports []v1.ServicePort, ns string, header []string, data [][]string, arg string) {
+func DrawSvcTable(clientset *kubernetes.Clientset, ports []v1.ServicePort, ns string, arg string) {
+	var data = [][]string{}
+	var header = []string{
+		"Service Name",
+		"Name",
+		"Protocol",
+		"Port",
+		"TargetPort",
+		"NodePort",
+		"AppProtocol",
+	}
 	for _, v := range ports {
 		appProtocol := ""
 		if v.AppProtocol != nil {
