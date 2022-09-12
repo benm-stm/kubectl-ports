@@ -40,12 +40,14 @@ var svcPortsCmd = &cobra.Command{
 			}
 			DrawSvcTable(clientset, svc.Spec.Ports, ns, arg)
 		}
-		svc, err := clientset.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			panic(err.Error())
-		}
-		for _, svc := range svc.Items {
-			DrawSvcTable(clientset, svc.Spec.Ports, ns, svc.Name)
+		if len(args) == 0 {
+			svc, err := clientset.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{})
+			if err != nil {
+				panic(err.Error())
+			}
+			for _, svc := range svc.Items {
+				DrawSvcTable(clientset, svc.Spec.Ports, ns, svc.Name)
+			}
 		}
 	},
 }
